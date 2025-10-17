@@ -1,39 +1,58 @@
 #!/bin/bash
+# PROJECT_BASE_STRUCTURE.sh
+# Generates a standard Java EE project structure.
+# Diseñado para ser idempotente: se puede ejecutar múltiples veces.
 
-# This script generates a standard Java EE project directory structure.
+set -euo pipefail
 
-# Define base paths
+# --- COLORES Y FUNCIONES DE LOG ---
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+log() { echo -e "${GREEN}[INFO]${NC} $1"; }
+warn() { echo -e "${YELLOW}[ADVERTENCIA]${NC} $1"; }
+error() { echo -e "${RED}[ERROR]${NC} $1"; exit 1; }
+
+# =================================================================
+# CONFIGURACIÓN DE LA ESTRUCTURA DEL PROYECTO
+# =================================================================
 BASE_PACKAGE_PATH="src/main/java/com/example/app"
 WEBAPP_PATH="src/main/webapp"
 RESOURCES_PATH="src/main/resources"
 
-# Define modules and sub-packages
 MODULES=("users" "wallet" "trips" "fleet" "routes" "history" "reports" "shared")
 SUB_PACKAGES=("bean" "dao" "entity" "service")
 COMMON_PACKAGES=("exception" "security" "util")
 
-echo "Creating project structure..."
+log "🚀 Iniciando la creación de la estructura base del proyecto..."
 
-# --- 1. JAVA PACKAGE STRUCTURE ---
-echo "Generating Java package structure..."
-# Create module packages and sub-packages
+# =================================================================
+# 1. CREACIÓN DE PAQUETES JAVA
+# =================================================================
+log "Generando estructura de paquetes Java en '$BASE_PACKAGE_PATH'..."
 for module in "${MODULES[@]}"; do
     for sub_package in "${SUB_PACKAGES[@]}"; do
         mkdir -p "${BASE_PACKAGE_PATH}/${module}/${sub_package}"
     done
 done
 
-# Create common packages
 for common_package in "${COMMON_PACKAGES[@]}"; do
     mkdir -p "${BASE_PACKAGE_PATH}/shared/${common_package}"
 done
 
-# Create DTO packages
 mkdir -p "$BASE_PACKAGE_PATH/trips/dto"
 mkdir -p "$BASE_PACKAGE_PATH/reports/dto"
+mkdir -p "$BASE_PACKAGE_PATH/api/resource"
+mkdir -p "$BASE_PACKAGE_PATH/api/dto"
+mkdir -p "$BASE_PACKAGE_PATH/api/exception"
+log "✅ Estructura de paquetes Java creada."
 
-# --- 2. EMPTY JAVA FILES ---
-echo "Creating empty Java files..."
+# =================================================================
+# 2. CREACIÓN DE ARCHIVOS .java VACÍOS
+# =================================================================
+log "Creando archivos .java vacíos..."
 touch "$BASE_PACKAGE_PATH/users/bean/GestionUsuariosBean.java"
 touch "$BASE_PACKAGE_PATH/users/bean/LoginBean.java"
 touch "$BASE_PACKAGE_PATH/users/bean/RegistroBean.java"
@@ -79,12 +98,6 @@ touch "$BASE_PACKAGE_PATH/shared/exception/BusinessLogicException.java"
 touch "$BASE_PACKAGE_PATH/shared/security/AuthFilter.java"
 touch "$BASE_PACKAGE_PATH/shared/util/DateUtil.java"
 touch "$BASE_PACKAGE_PATH/shared/util/FacesUtil.java"
-
-# --- 3. JAX-RS REST LAYER ---
-echo "Generating JAX-RS REST layer structure..."
-mkdir -p "$BASE_PACKAGE_PATH/api/resource"
-mkdir -p "$BASE_PACKAGE_PATH/api/dto"
-mkdir -p "$BASE_PACKAGE_PATH/api/exception"
 touch "$BASE_PACKAGE_PATH/api/resource/UsuarioResource.java"
 touch "$BASE_PACKAGE_PATH/api/resource/BilleteraResource.java"
 touch "$BASE_PACKAGE_PATH/api/resource/ViajeResource.java"
@@ -95,9 +108,12 @@ touch "$BASE_PACKAGE_PATH/api/resource/ReporteResource.java"
 touch "$BASE_PACKAGE_PATH/api/exception/RestExceptionHandler.java"
 touch "$BASE_PACKAGE_PATH/api/dto/UsuarioDTO.java"
 touch "$BASE_PACKAGE_PATH/api/dto/ViajeDTO.java"
+log "✅ Archivos .java creados."
 
-# --- 4. WEBAPP XHTML AND RESOURCE FILES ---
-echo "Generating XHTML and resource files..."
+# =================================================================
+# 3. CREACIÓN DE ESTRUCTURA WEB (XHTML Y RECURSOS)
+# =================================================================
+log "Generando estructura de carpetas y archivos .xhtml..."
 mkdir -p "$WEBAPP_PATH/admin/flota"
 mkdir -p "$WEBAPP_PATH/admin/paradas"
 mkdir -p "$WEBAPP_PATH/admin/rutas"
@@ -126,13 +142,15 @@ touch "$WEBAPP_PATH/login.xhtml"
 touch "$WEBAPP_PATH/registro.xhtml"
 touch "$WEBAPP_PATH/template.xhtml"
 touch "$WEBAPP_PATH/resources/css/style.css"
+log "✅ Archivos .xhtml y de recursos creados."
 
-# --- 5. CONFIGURATION FILES ---
-echo "Generating configuration files..."
+# =================================================================
+# 4. CREACIÓN DE ARCHIVOS DE CONFIGURACIÓN
+# =================================================================
+log "Generando archivos de configuración (web.xml, persistence.xml)..."
 mkdir -p "$WEBAPP_PATH/WEB-INF"
 mkdir -p "$RESOURCES_PATH/META-INF"
 
-# Create web.xml
 cat <<EOF > "$WEBAPP_PATH/WEB-INF/web.xml"
 <?xml version="1.0" encoding="UTF-8"?>
 <web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
@@ -154,7 +172,6 @@ cat <<EOF > "$WEBAPP_PATH/WEB-INF/web.xml"
 </web-app>
 EOF
 
-# Create persistence.xml
 cat <<EOF > "$RESOURCES_PATH/META-INF/persistence.xml"
 <?xml version="1.0" encoding="UTF-8"?>
 <persistence version="3.0"
@@ -170,8 +187,14 @@ cat <<EOF > "$RESOURCES_PATH/META-INF/persistence.xml"
 </persistence>
 EOF
 
-# Create empty beans.xml and faces-config.xml
 touch "$WEBAPP_PATH/WEB-INF/beans.xml"
 touch "$WEBAPP_PATH/WEB-INF/faces-config.xml"
+log "✅ Archivos de configuración creados."
 
-echo "Project structure created successfully."
+# =================================================================
+# MENSAJE FINAL
+# =================================================================
+log ""
+log "🎉 ¡La estructura del proyecto ha sido creada exitosamente!"
+log "   Ahora puedes abrir este proyecto en tu IDE favorito."
+log ""
