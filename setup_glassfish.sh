@@ -76,7 +76,7 @@ create_jdbc_connection_pool() {
         --steadypoolsize 8 \
         --maxpoolsize 32 \
         --idletimeout 300 \
-        --property "user=hDB:password=pas!@#:url=jdbc\:postgresql\://localhost\:5432/NombreDB" \
+        --property "user=$1:password=$2:url=jdbc\:postgresql\://$3\:$4/$5" \
         PostgresConnectionPool
 }
 
@@ -116,14 +116,17 @@ delete_jdbc_connection_pool() {
 # Main script logic
 case "$1" in
     setup)
+        if [ $# -ne 6 ]; then
+            echo "Usage: $0 setup <db_user> <db_password> <db_host> <db_port> <db_name>"
+            exit 1
+        fi
         if [ ! -d "${GLASSFISH_HOME}" ]; then
             download_dependencies
             unzip_glassfish
             start_glassfish
             "${GLASSFISH_HOME}/bin/asadmin" add-library "${PG_DRIVER_PATH}"
-            create_jdbc_connection_pool
+            create_jdbc_connection_pool "$2" "$3" "$4" "$5" "$6"
             create_jdbc_resource
-            deploy_war "$(pwd)/sample.war"
         else
             echo "GlassFish is already installed."
         fi
@@ -142,12 +145,16 @@ case "$1" in
         deploy_war "$2"
         ;;
     clean)
-        undeploy_war "sample"
+        if [ -z "$2" ]; then
+            echo "Usage: $0 clean <app_name>"
+            exit 1
+        fi
+        undeploy_war "$2"
         delete_jdbc_resource
         delete_jdbc_connection_pool
         ;;
     *)
-        echo "Usage: $0 {setup|start|stop|deploy <path_to_war>|clean}"
+        echo "Usage: $0 {setup <db_user> <db_password> <db_host> <db_port> <db_name>|start|stop|deploy <path_to_war>|clean <app_name>}"
         exit 1
         ;;
 esac
